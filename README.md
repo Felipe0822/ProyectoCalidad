@@ -172,6 +172,14 @@ Los artefactos de SpecKit están en:
 
 Cada feature incluye especificación, plan, modelo de datos, contratos OpenAPI, quickstart y tareas.
 
+## Estado actual
+
+- Feature 001 implementada: usuarios y recursos.
+- Feature 002 implementada: reservas, cancelación, consultas, disponibilidad y finalización automática.
+- Validación manual realizada con la API: CRUD, reglas de estado, fechas inválidas, solapamientos, límite de 3 reservas y errores uniformes.
+- Validación de concurrencia realizada con 8 solicitudes simultáneas sobre la misma franja: 1 reserva creada y 7 respuestas `409 RESERVA_SUPERPUESTA`.
+- Validación del límite concurrente: 4 solicitudes simultáneas del mismo usuario, solo 2 confirmadas para completar el máximo de 3 reservas activas.
+
 ## Pruebas
 
 En esta etapa se prioriza la arquitectura. Las pruebas automatizadas (JUnit, Mockito, MockMvc, concurrencia), la cobertura con JaCoCo, PIT, SonarQube, Postman y JMeter se incorporan después de estabilizar la estructura, antes de la entrega final. La deuda de pruebas está registrada en las tareas de cada feature.
