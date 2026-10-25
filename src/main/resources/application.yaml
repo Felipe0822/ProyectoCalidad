@@ -1,3 +1,31 @@
 spring:
   application:
     name: reservas
+  datasource:
+    url: jdbc:h2:mem:reservas;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=10000
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+    properties:
+      jakarta:
+        persistence:
+          lock:
+            timeout: 10000
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jackson:
+    default-property-inclusion: non_null
+
+app:
+  timezone: America/Bogota
+  scheduling:
+    enabled: true
+    finalizacion-ms: 60000

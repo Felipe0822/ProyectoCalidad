@@ -1,50 +1,74 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Constitución del Proyecto: Sistema de Reservas de Espacios y Recursos
 
-## Core Principles
+## Principios Fundamentales
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Especificación primero y trazabilidad
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Toda funcionalidad nace de una especificación aprobada. Cada requisito funcional (`FR-xxx`) debe tener al menos un escenario de aceptación. Antes de la entrega final, cada requisito debe poder rastrearse hasta una tarea, una prueba automatizada y el código que lo implementa.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Arquitectura primero, pruebas después (iteración actual)
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+En esta etapa se prioriza una arquitectura limpia, compilable y con límites claros entre capas. Las pruebas automatizadas se incorporarán cuando la estructura de paquetes, el modelo de datos y los contratos REST estén estabilizados. Esto no elimina la obligación de probar: antes de la entrega final, cada regla de negocio debe tener pruebas unitarias, de integración y, donde aplique, de concurrencia. La deuda de pruebas debe quedar registrada y saldarse antes de cerrar el proyecto.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. Arquitectura en capas y límites claros
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+La dependencia permitida es:
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+```text
+Controller → Service → Repository → Base de datos
+```
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Los controladores no acceden a repositorios ni a entidades JPA. La lógica de negocio vive en la capa de servicio. Se usan DTOs para solicitudes y respuestas; las entidades JPA no se exponen en la API. Los mappers convierten entre capas.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### IV. Contratos REST explícitos y errores uniformes
 
-## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+Todos los endpoints usan JSON, códigos HTTP coherentes y un formato único de error:
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+```json
+{
+  "timestamp": "2026-10-25T10:15:30",
+  "status": 409,
+  "error": "RESERVA_SUPERPUESTA",
+  "message": "El recurso ya se encuentra reservado para este horario",
+  "path": "/reservas"
+}
+```
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Las excepciones se centralizan con `@RestControllerAdvice`. Los errores de validación se devuelven como 400; los conflictos de negocio como 409; los recursos inexistentes como 404. Nunca se exponen stack traces.
+
+### V. Integridad y concurrencia
+
+Las operaciones que crean o cancelan reservas son transaccionales. La prevención de solapamientos y el límite de reservas activas se garantizan con bloqueos pesimistas sobre usuario y recurso, en ese orden, además de consultas dentro de la misma transacción. No se confía únicamente en validaciones previas en memoria. El sistema debe mantener la consistencia ante solicitudes concurrentes.
+
+### VI. Calidad verificable y automatizable
+
+El build debe quedar preparado para ejecutar pruebas unitarias, de integración y de concurrencia. La configuración de JaCoCo, PIT, SonarQube, Postman y JMeter debe quedar preparada. Las pruebas deben ser deterministas: el tiempo se controla con un `Clock` inyectable y los datos de prueba se crean de forma explícita. La versión final debe cumplir la cobertura mínima que se defina al estabilizar la arquitectura.
+
+### VII. Simplicidad y evolución incremental
+
+Se implementa la solución más simple que cumpla los requisitos. No se agregan autenticación, interfaz gráfica, recurrencia, lista de espera ni integraciones externas en la primera versión. Cada feature se entrega como un incremento independiente y verificable. La complejidad adicional debe justificarse en el plan.
+
+## Restricciones Técnicas
+
+- Java 21, Spring Boot 4.1.1, Gradle 9.8.2, H2, Spring Data JPA, Bean Validation y Lombok.
+- Arquitectura de un solo proyecto desplegable; sin microservicios.
+- Zona horaria de la institución configurable (`app.timezone`, por defecto `America/Bogota`).
+- Fechas y horas con `LocalDateTime` interpretadas en la zona de la institución.
+- API REST sin autenticación en la primera versión; los actores se modelan como datos, no como usuarios autenticados.
+- Base de datos H2 en memoria para desarrollo y pruebas; PostgreSQL queda como evolución futura.
+
+## Flujo de Desarrollo y Puertas de Calidad
+
+1. Especificación revisada y aprobada.
+2. Plan técnico revisado; incluye modelo de datos, contratos y estrategia de concurrencia.
+3. Tareas generadas y analizadas; cada tarea indica archivo y dependencia.
+4. Implementación por historia de usuario, con compilación verde en cada checkpoint.
+5. Al estabilizar la arquitectura, se escriben las pruebas de cada regla de negocio.
+6. Cobertura y análisis estático antes de la entrega final.
+7. Revisión final contra la especificación y validación con Postman/JMeter cuando aplique.
+
+## Gobernanza
+
+Esta constitución prevalece sobre cualquier práctica o preferencia individual. Cualquier excepción debe documentarse en la sección `Complexity Tracking` del plan y aprobarse en la revisión. Las enmiendas requieren actualizar este archivo, registrar la versión y justificar el cambio. Todas las revisiones deben verificar el cumplimiento de los principios.
+
+**Version**: 1.0.0 | **Ratified**: 2026-10-25 | **Last Amended**: 2026-10-25

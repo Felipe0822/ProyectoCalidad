@@ -1,0 +1,320 @@
+openapi: 3.0.3
+info:
+  title: Sistema de Reservas — Usuarios y Recursos
+  version: 1.0.0
+  description: API para administrar usuarios y recursos de una institución.
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: Usuarios
+  - name: Recursos
+
+paths:
+  /usuarios:
+    get:
+      tags: [Usuarios]
+      summary: Listar usuarios
+      responses:
+        '200':
+          description: Lista de usuarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UsuarioResponse'
+    post:
+      tags: [Usuarios]
+      summary: Crear usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsuarioRequest'
+      responses:
+        '201':
+          description: Usuario creado
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /usuarios/{id}:
+    get:
+      tags: [Usuarios]
+      summary: Consultar usuario por ID
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Usuario encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /usuarios/{id}/estado:
+    patch:
+      tags: [Usuarios]
+      summary: Cambiar estado del usuario
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CambioEstadoUsuarioRequest'
+      responses:
+        '200':
+          description: Estado actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /recursos:
+    get:
+      tags: [Recursos]
+      summary: Listar recursos
+      responses:
+        '200':
+          description: Lista de recursos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecursoResponse'
+    post:
+      tags: [Recursos]
+      summary: Crear recurso
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecursoRequest'
+      responses:
+        '201':
+          description: Recurso creado
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecursoResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /recursos/{id}:
+    get:
+      tags: [Recursos]
+      summary: Consultar recurso por ID
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Recurso encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecursoResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Recursos]
+      summary: Modificar recurso
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecursoRequest'
+      responses:
+        '200':
+          description: Recurso actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecursoResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /recursos/{id}/estado:
+    patch:
+      tags: [Recursos]
+      summary: Cambiar estado del recurso
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CambioEstadoRecursoRequest'
+      responses:
+        '200':
+          description: Estado actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecursoResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+
+  responses:
+    BadRequest:
+      description: Solicitud inválida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Conflicto de negocio
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    UsuarioRequest:
+      type: object
+      required: [nombre, documento, correo]
+      properties:
+        nombre:
+          type: string
+          maxLength: 100
+        documento:
+          type: string
+          maxLength: 30
+        correo:
+          type: string
+          format: email
+          maxLength: 120
+
+    UsuarioResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+        documento:
+          type: string
+        correo:
+          type: string
+        estado:
+          type: string
+          enum: [ACTIVO, INACTIVO]
+
+    CambioEstadoUsuarioRequest:
+      type: object
+      required: [estado]
+      properties:
+        estado:
+          type: string
+          enum: [ACTIVO, INACTIVO]
+
+    RecursoRequest:
+      type: object
+      required: [nombre, tipo, capacidad]
+      properties:
+        nombre:
+          type: string
+          maxLength: 100
+        descripcion:
+          type: string
+          maxLength: 255
+        tipo:
+          type: string
+          maxLength: 50
+        capacidad:
+          type: integer
+          minimum: 1
+
+    RecursoResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        tipo:
+          type: string
+        capacidad:
+          type: integer
+        estado:
+          type: string
+          enum: [DISPONIBLE, MANTENIMIENTO, FUERA_DE_SERVICIO]
+
+    CambioEstadoRecursoRequest:
+      type: object
+      required: [estado]
+      properties:
+        estado:
+          type: string
+          enum: [DISPONIBLE, MANTENIMIENTO, FUERA_DE_SERVICIO]
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string

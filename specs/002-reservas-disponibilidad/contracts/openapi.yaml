@@ -1,0 +1,322 @@
+openapi: 3.0.3
+info:
+  title: Sistema de Reservas — Reservas y Disponibilidad
+  version: 1.0.0
+  description: API para crear, cancelar y consultar reservas, y consultar disponibilidad.
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: Reservas
+  - name: Disponibilidad
+
+paths:
+  /reservas:
+    post:
+      tags: [Reservas]
+      summary: Crear reserva
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservaRequest'
+      responses:
+        '201':
+          description: Reserva creada
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      tags: [Reservas]
+      summary: Consultar reservas por fecha
+      parameters:
+        - name: fecha
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Reservas que intersectan el día
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReservaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /reservas/{id}:
+    get:
+      tags: [Reservas]
+      summary: Consultar reserva por ID
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Reserva encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservaResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Reservas]
+      summary: Cancelar reserva
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Reserva cancelada o ya cancelada
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /reservas/usuario/{usuarioId}:
+    get:
+      tags: [Reservas]
+      summary: Reservas por usuario
+      parameters:
+        - name: usuarioId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Reservas del usuario
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReservaResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /reservas/recurso/{recursoId}:
+    get:
+      tags: [Reservas]
+      summary: Reservas por recurso
+      parameters:
+        - name: recursoId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Reservas del recurso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReservaResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /recursos/{id}/disponibilidad:
+    get:
+      tags: [Disponibilidad]
+      summary: Consultar disponibilidad de un recurso
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - name: fechaInicio
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: fechaFin
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Resultado de disponibilidad
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisponibilidadResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+
+  responses:
+    BadRequest:
+      description: Solicitud inválida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Conflicto de negocio
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ReservaRequest:
+      type: object
+      required: [usuarioId, recursoId, fechaInicio, fechaFin]
+      properties:
+        usuarioId:
+          type: integer
+          format: int64
+          minimum: 1
+        recursoId:
+          type: integer
+          format: int64
+          minimum: 1
+        fechaInicio:
+          type: string
+          format: date-time
+        fechaFin:
+          type: string
+          format: date-time
+
+    ReservaResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        usuario:
+          $ref: '#/components/schemas/UsuarioResumen'
+        recurso:
+          $ref: '#/components/schemas/RecursoResumen'
+        fechaInicio:
+          type: string
+          format: date-time
+        fechaFin:
+          type: string
+          format: date-time
+        estado:
+          type: string
+          enum: [ACTIVA, CANCELADA, FINALIZADA]
+        fechaCreacion:
+          type: string
+          format: date-time
+
+    UsuarioResumen:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+        documento:
+          type: string
+
+    RecursoResumen:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+        tipo:
+          type: string
+
+    DisponibilidadResponse:
+      type: object
+      properties:
+        recursoId:
+          type: integer
+          format: int64
+        fechaInicio:
+          type: string
+          format: date-time
+        fechaFin:
+          type: string
+          format: date-time
+        disponible:
+          type: boolean
+        motivo:
+          type: string
+          nullable: true
+          enum:
+            - RECURSO_NO_DISPONIBLE
+            - RESERVA_SUPERPUESTA
+        reservasConflictivas:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConflictoReserva'
+
+    ConflictoReserva:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        usuarioId:
+          type: integer
+          format: int64
+        fechaInicio:
+          type: string
+          format: date-time
+        fechaFin:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string
