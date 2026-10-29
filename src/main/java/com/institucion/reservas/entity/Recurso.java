@@ -12,9 +12,11 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Check;
 
 @Entity
 @Table(name = "recursos")
+@Check(constraints = "capacidad > 0")
 @Getter
 @Setter
 @NoArgsConstructor

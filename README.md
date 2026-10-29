@@ -4,7 +4,7 @@ API REST para administrar usuarios, recursos institucionales y reservas, con con
 
 ## Tecnologías
 
-- Java 21
+- Java 21 (Gradle lo descarga automáticamente con Foojay si no está instalado)
 - Spring Boot 4.1.1
 - Spring Web MVC
 - Spring Data JPA
@@ -51,11 +51,16 @@ src/main/java/com/institucion/reservas/
 
 ## Ejecución
 
-Requisitos: JDK 21.
+Requisitos: JDK 21. Si no está instalado, Gradle lo aprovisiona mediante el plugin Foojay configurado en `settings.gradle`.
 
 ```bash
-export JAVA_HOME=/ruta/al/jdk-21
 ./gradlew bootRun
+```
+
+En PowerShell:
+
+```powershell
+.\gradlew.bat bootRun
 ```
 
 La API queda disponible en `http://localhost:8080`.
@@ -75,7 +80,7 @@ Consola H2:
 - `ddl-auto=create-drop`.
 - `open-in-view=false`.
 - Zona horaria `America/Bogota` mediante `app.timezone`.
-- Finalización automática cada 60 segundos mediante `app.scheduling.finalizacion-ms`.
+- Finalización automática cada 30 segundos mediante `app.scheduling.finalizacion-ms`, para cumplir el máximo de 1 minuto del SC-006.
 
 ## Endpoints
 
@@ -170,16 +175,49 @@ Los artefactos de SpecKit están en:
 - `specs/002-reservas-disponibilidad/`
 - `.specify/memory/constitution.md`
 
-Cada feature incluye especificación, plan, modelo de datos, contratos OpenAPI, quickstart y tareas.
+Cada feature incluye especificación, plan, modelo de datos, contratos OpenAPI, quickstart, tareas y matriz de trazabilidad.
 
 ## Estado actual
 
-- Feature 001 implementada: usuarios y recursos.
-- Feature 002 implementada: reservas, cancelación, consultas, disponibilidad y finalización automática.
-- Validación manual realizada con la API: CRUD, reglas de estado, fechas inválidas, solapamientos, límite de 3 reservas y errores uniformes.
-- Validación de concurrencia realizada con 8 solicitudes simultáneas sobre la misma franja: 1 reserva creada y 7 respuestas `409 RESERVA_SUPERPUESTA`.
-- Validación del límite concurrente: 4 solicitudes simultáneas del mismo usuario, solo 2 confirmadas para completar el máximo de 3 reservas activas.
+Esta es una **iteración de arquitectura**. La implementación funcional de las features 001 y 002 está completa; el cierre de entrega final queda pendiente de las pruebas automatizadas y los gates de calidad.
 
-## Pruebas
+- Feature 001: usuarios y recursos implementados, con validación y manejo uniforme de errores.
+- Feature 002: reservas, cancelación, consultas, disponibilidad y finalización automática implementadas.
+- Contradicciones documentales corregidas: estado de specs, planes, checklists, DTOs y nombres de consultas.
+- Correcciones de robustez aplicadas: recálculo de `now` después de los bloqueos, scheduler con `fixedRate`, restricciones `CHECK` y clasificación de errores de integridad.
+- Validación de humo realizada con la API: creación de usuario y recurso, disponibilidad, creación de reserva, solapamiento `409`, cancelación y fecha pasada `400`.
+- La validación funcional completa debe reproducirse con la colección Postman incluida antes de la entrega final.
 
-En esta etapa se prioriza la arquitectura. Las pruebas automatizadas (JUnit, Mockito, MockMvc, concurrencia), la cobertura con JaCoCo, PIT, SonarQube, Postman y JMeter se incorporan después de estabilizar la estructura, antes de la entrega final. La deuda de pruebas está registrada en las tareas de cada feature.
+## Pruebas y calidad
+
+En esta etapa se prioriza la arquitectura. La deuda de pruebas está registrada en las tareas de cada feature y debe saldarse antes de la entrega final.
+
+Comandos disponibles:
+
+```bash
+./gradlew test
+./gradlew jacocoTestReport
+./gradlew pitest
+```
+
+En PowerShell, usar `.\gradlew.bat` en lugar de `./gradlew`.
+
+Artefactos preparados:
+
+- `postman/Reservas-API.postman_collection.json`: colección base para pruebas de contrato y humo.
+- `jmeter/reservas-concurrencia.jmx`: plan base para la prueba de 500 solicitudes.
+- `sonar-project.properties`: configuración del análisis SonarQube.
+- JaCoCo: reporte XML/HTML generado por Gradle.
+- PIT: configuración preparada con el plugin `pitest-junit5-plugin`.
+- `.github/workflows/ci.yml`: compilación, pruebas y publicación de reportes.
+
+Pendiente antes de la entrega final:
+
+- Implementar las pruebas T044–T049 y T060–T065.
+- Definir y aplicar umbrales de cobertura y mutación.
+- Ejecutar Postman/Newman, JMeter, PIT y SonarQube.
+
+## Trazabilidad
+
+- `specs/001-gestion-usuarios-recursos/traceability.md`
+- `specs/002-reservas-disponibilidad/traceability.md`

@@ -41,7 +41,7 @@ AND existente.fechaFin > nueva.fechaInicio
 
 ### D5 — Finalización automática
 
-**Decisión**: job periódico cada 60 segundos + estado efectivo en las respuestas.
+**Decisión**: job periódico cada 30 segundos + estado efectivo en las respuestas.
 
 **Motivo**:
 - El enunciado exige el estado `FINALIZADA`, pero no un endpoint para finalizar.

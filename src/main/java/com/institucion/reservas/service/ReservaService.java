@@ -37,8 +37,7 @@ public class ReservaService {
 
     @Transactional
     public ReservaResponse crear(ReservaRequest request) {
-        LocalDateTime now = LocalDateTime.now(clock);
-        validarFechas(request.fechaInicio(), request.fechaFin(), now);
+        validarFechas(request.fechaInicio(), request.fechaFin(), LocalDateTime.now(clock));
 
         // Orden de bloqueo obligatorio: usuario y luego recurso, para evitar deadlocks.
         Usuario usuario = usuarioRepository.findByIdForUpdate(request.usuarioId())
@@ -52,6 +51,9 @@ public class ReservaService {
                         "RECURSO_NO_ENCONTRADO",
                         "No existe un recurso con id " + request.recursoId()
                 ));
+
+        LocalDateTime now = LocalDateTime.now(clock);
+        validarFechas(request.fechaInicio(), request.fechaFin(), now);
 
         if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
             throw new ConflictException(
@@ -99,7 +101,6 @@ public class ReservaService {
 
     @Transactional
     public void cancelar(Long id) {
-        LocalDateTime now = LocalDateTime.now(clock);
         Reserva reserva = reservaRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new NotFoundException(
                         "RESERVA_NO_ENCONTRADA",
@@ -110,6 +111,7 @@ public class ReservaService {
             return;
         }
 
+        LocalDateTime now = LocalDateTime.now(clock);
         if (reserva.getEstado() == EstadoReserva.FINALIZADA || !reserva.getFechaFin().isAfter(now)) {
             throw new ConflictException(
                     "RESERVA_FINALIZADA",

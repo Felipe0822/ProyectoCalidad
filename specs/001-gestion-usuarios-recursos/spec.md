@@ -2,7 +2,8 @@
 
 **Feature Branch**: `001-gestion-usuarios-recursos`  
 **Created**: 2026-10-25  
-**Status**: Draft  
+**Status**: Approved for architecture iteration
+**Approved**: 2026-10-29
 **Input**: User description: "API REST para administrar usuarios y recursos de una institución: crear, consultar, modificar y cambiar estados, con validaciones y manejo uniforme de errores."
 
 ## User Scenarios & Testing
@@ -74,6 +75,12 @@ Como administrador, quiero cambiar el estado de un recurso para reflejar manteni
 3. **Given** un recurso `FUERA_DE_SERVICIO`, **When** se cambia a `DISPONIBLE`, **Then** el cambio se persiste.
 4. **Given** un recurso inexistente, **When** se cambia su estado, **Then** se devuelve 404.
 
+### Cross-Cutting Acceptance Scenarios
+
+1. **Given** una solicitud con datos inválidos, **When** se procesa, **Then** la respuesta contiene `status`, `error`, `message`, `timestamp`, `path` y, cuando aplica, `details` por campo.
+2. **Given** una excepción de negocio o de validación, **When** llega a la API, **Then** es manejada por `@RestControllerAdvice` sin exponer stack traces.
+3. **Given** cualquier endpoint, **When** responde, **Then** usa DTOs y nunca serializa entidades JPA.
+
 ### Edge Cases
 
 - Documento o correo duplicado: 409.
@@ -127,3 +134,11 @@ Como administrador, quiero cambiar el estado de un recurso para reflejar manteni
 - Los estados solo toman los valores definidos en el enunciado.
 - Cambiar el estado de un usuario o recurso no cancela reservas existentes.
 - La capacidad es informativa; no se usa para limitar el número de asistentes porque la reserva no registra asistentes.
+
+## Clarifications
+
+### Session 2026-10-29
+
+- Esta especificación se aprueba para la **iteración de arquitectura**. El cierre de entrega final queda condicionado a completar las pruebas automatizadas y los gates de calidad de la constitución.
+- La validación de datos se realiza con Bean Validation y reglas de servicio. La integridad de unicidad de documento y correo también se refuerza en base de datos.
+- Las restricciones de capacidad y fechas se refuerzan en base de datos con `CHECK` además de la validación de servicio.

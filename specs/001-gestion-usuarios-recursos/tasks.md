@@ -108,6 +108,7 @@
 ## Phase 8: Pruebas diferidas (posteriores a la estabilización)
 
 > No implementar todavía. Se agregan cuando la arquitectura esté cerrada.
+> Gate de entrega final: no se puede cerrar el proyecto hasta completar todas estas tareas y ejecutar la cobertura.
 
 - [ ] T044 Unitarias de `UsuarioService` con Mockito.
 - [ ] T045 Unitarias de `RecursoService` con Mockito.

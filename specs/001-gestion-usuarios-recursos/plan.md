@@ -1,6 +1,6 @@
 # Implementation Plan: Gestión de usuarios y recursos
 
-**Branch**: `001-gestion-usuarios-recursos` | **Date**: 2026-10-25 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-gestion-usuarios-recursos` | **Date**: 2026-10-25 | **Status**: Approved for architecture iteration | **Spec**: [spec.md](./spec.md)
 
 **Input**: Feature specification from `/specs/001-gestion-usuarios-recursos/spec.md`
 
@@ -32,7 +32,7 @@ Implementar la base del sistema: gestión de usuarios y recursos con validacione
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- [x] Especificación primero: `spec.md` aprobado.
+- [x] Especificación primero: `spec.md` aprobado para la iteración de arquitectura (2026-10-29).
 - [x] Arquitectura en capas: Controller → Service → Repository.
 - [x] DTOs y mappers; entidades JPA no expuestas.
 - [x] Manejo global de errores con `@RestControllerAdvice`.
@@ -55,6 +55,7 @@ specs/001-gestion-usuarios-recursos/
 │   └── openapi.yaml
 ├── checklists/
 │   └── requirements.md
+├── traceability.md
 └── tasks.md
 ```
 
@@ -152,3 +153,7 @@ Las pruebas se difieren por decisión del proyecto. Antes de la entrega final se
 ## Complexity Tracking
 
 No hay violaciones a la constitución en esta feature. No se requiere justificación adicional.
+
+## Traceability
+
+La matriz de trazabilidad requisito → historia → tarea → prueba → código está en [traceability.md](./traceability.md).

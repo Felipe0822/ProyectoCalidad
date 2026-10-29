@@ -1,5 +1,7 @@
 plugins {
 	id 'java'
+	id 'jacoco'
+	id 'info.solidsoft.pitest' version '1.19.0'
 	id 'org.springframework.boot' version '4.1.1'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -35,4 +37,21 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy tasks.named('jacocoTestReport')
+}
+
+tasks.named('jacocoTestReport') {
+	dependsOn tasks.named('test')
+	reports {
+		xml.required = true
+		html.required = true
+	}
+}
+
+pitest {
+	targetClasses = ['com.institucion.reservas.**']
+	targetTests = ['com.institucion.reservas.**']
+	outputFormats = ['XML', 'HTML']
+	timestampedReports = false
+	junit5PluginVersion = '1.2.3'
 }

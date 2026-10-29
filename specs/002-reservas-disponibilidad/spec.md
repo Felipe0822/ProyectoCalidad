@@ -2,7 +2,8 @@
 
 **Feature Branch**: `002-reservas-disponibilidad`  
 **Created**: 2026-10-25  
-**Status**: Draft  
+**Status**: Approved for architecture iteration
+**Approved**: 2026-10-29
 **Input**: User description: "API REST para crear, cancelar y consultar reservas de recursos, aplicando reglas de disponibilidad, estados y límite de reservas activas."
 
 ## User Scenarios & Testing
@@ -79,7 +80,14 @@ Como usuario, quiero consultar si un recurso está disponible en una franja ante
 2. **Given** una reserva `ACTIVA` que se solapa, **When** se consulta, **Then** se devuelve `disponible=false` con las reservas conflictivas.
 3. **Given** un recurso en `MANTENIMIENTO` o `FUERA_DE_SERVICIO`, **When** se consulta, **Then** se devuelve `disponible=false` con el motivo.
 4. **Given** una `fechaFin` anterior o igual a `fechaInicio`, **When** se consulta, **Then** se rechaza con 400 `FECHAS_INVALIDAS`.
-5. **Given** un recurso inexistente, **When** se consulta, **Then** se devuelve 404.
+5. **Given** una `fechaInicio` anterior al momento actual, **When** se consulta, **Then** se rechaza con 400 `FECHA_INICIO_EN_PASADO`.
+6. **Given** un recurso inexistente, **When** se consulta, **Then** se devuelve 404.
+
+### Cross-Cutting Acceptance Scenarios
+
+1. **Given** una reserva `ACTIVA` cuya `fechaFin` ya pasó y el job aún no ha corrido, **When** se consulta, **Then** el estado efectivo devuelto es `FINALIZADA`; **When** corre el job, **Then** el estado persistido también pasa a `FINALIZADA`.
+2. **Given** una solicitud con datos inválidos, **When** se procesa, **Then** la respuesta contiene `status`, `error`, `message`, `timestamp`, `path` y, cuando aplica, `details` por campo.
+3. **Given** cualquier endpoint, **When** responde, **Then** usa DTOs, incluye usuario y recurso como resúmenes y nunca serializa entidades JPA.
 
 ### Edge Cases
 
@@ -95,6 +103,7 @@ Como usuario, quiero consultar si un recurso está disponible en una franja ante
 - Solicitudes concurrentes para el mismo recurso: solo una debe confirmarse.
 - Solicitudes concurrentes del mismo usuario para distintos recursos: el límite de 3 se respeta.
 - Zona horaria: todas las fechas se interpretan en la zona configurada de la institución.
+- La consulta de disponibilidad también rechaza una `fechaInicio` anterior al momento actual con 400 `FECHA_INICIO_EN_PASADO`.
 - Reintento de la misma solicitud: no se exige idempotencia en esta versión; el solapamiento evita duplicados exactos.
 
 ## Requirements
@@ -113,7 +122,7 @@ Como usuario, quiero consultar si un recurso está disponible en una franja ante
 - **FR-010**: El sistema DEBE rechazar la cancelación de una reserva `FINALIZADA`.
 - **FR-011**: El sistema DEBE finalizar automáticamente las reservas `ACTIVAS` cuya `fechaFin` ya pasó.
 - **FR-012**: El sistema DEBE permitir consultar reservas por usuario, por recurso y por fecha.
-- **FR-013**: El sistema DEBE permitir consultar la disponibilidad de un recurso para una franja.
+- **FR-013**: El sistema DEBE permitir consultar la disponibilidad de un recurso para una franja futura válida, rechazando fechas inválidas o con inicio en el pasado.
 - **FR-014**: El sistema DEBE devolver las reservas conflictivas al consultar disponibilidad.
 - **FR-015**: El sistema DEBE garantizar la consistencia ante solicitudes concurrentes mediante transacciones y bloqueos.
 - **FR-016**: El sistema DEBE devolver errores uniformes y códigos HTTP coherentes.
@@ -147,3 +156,13 @@ Como usuario, quiero consultar si un recurso está disponible en una franja ante
 - Cambiar el estado de un usuario o recurso no cancela reservas existentes.
 - La finalización automática se implementa con un job periódico y estado efectivo en las respuestas; puede existir una diferencia máxima de 1 minuto en la base de datos.
 - No se exige idempotencia explícita en la creación; el solapamiento impide duplicados exactos.
+
+## Clarifications
+
+### Session 2026-10-29
+
+- Esta especificación se aprueba para la **iteración de arquitectura**. El cierre de entrega final queda condicionado a completar las pruebas automatizadas y los gates de calidad de la constitución.
+- El límite de 3 se interpreta como máximo 3 reservas `ACTIVA` vigentes por usuario (`fechaFin > now`), no como máximo 3 reservas solapadas.
+- Para esta iteración, la concurrencia se valida con una prueba automatizada de 20–50 hilos. La prueba de 500 solicitudes se ejecuta con JMeter antes de la entrega final; por eso SC-002 permanece como criterio de aceptación final.
+- La disponibilidad rechaza fechas de inicio en el pasado porque solo tiene sentido consultar franjas reservables.
+- Las restricciones de fechas se refuerzan en base de datos con `CHECK (fecha_fin > fecha_inicio)`, además de la validación de servicio.

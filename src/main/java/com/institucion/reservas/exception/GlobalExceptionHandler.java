@@ -26,6 +26,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @Slf4j
@@ -187,11 +188,26 @@ public class GlobalExceptionHandler {
             DataIntegrityViolationException exception,
             HttpServletRequest request
     ) {
-        log.warn("Violación de integridad de datos en {}: {}", request.getRequestURI(), exception.getMostSpecificCause().getMessage());
+        String cause = exception.getMostSpecificCause().getMessage();
+        String normalized = cause == null ? "" : cause.toLowerCase(Locale.ROOT);
+        log.warn("Violación de integridad de datos en {}: {}", request.getRequestURI(), cause);
+
+        if (normalized.contains("uk_usuario_documento")
+                || normalized.contains("uk_usuario_correo")
+                || normalized.contains("unique")) {
+            return build(
+                    HttpStatus.CONFLICT,
+                    "DATOS_DUPLICADOS",
+                    "Ya existe un registro con los mismos datos únicos",
+                    request,
+                    null
+            );
+        }
+
         return build(
-                HttpStatus.CONFLICT,
-                "DATOS_DUPLICADOS",
-                "Ya existe un registro con los mismos datos únicos",
+                HttpStatus.BAD_REQUEST,
+                "DATOS_INVALIDOS",
+                "Los datos no cumplen las restricciones de integridad",
                 request,
                 null
         );

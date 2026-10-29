@@ -1,0 +1,170 @@
+{
+  "info": {
+    "name": "Reservas API",
+    "description": "Colección base para validar usuarios, recursos y reservas. Ejecutar con Newman antes de la entrega final.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "usuarioId", "value": "1" },
+    { "key": "recursoId", "value": "1" },
+    { "key": "reservaId", "value": "1" },
+    { "key": "fechaInicio", "value": "2026-12-01T09:00:00" },
+    { "key": "fechaFin", "value": "2026-12-01T11:00:00" }
+  ],
+  "item": [
+    {
+      "name": "Crear usuario",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/usuarios",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"nombre\":\"Ana Pérez\",\"documento\":\"12345678\",\"correo\":\"ana@institucion.edu\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('usuarioId', body.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Crear recurso",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/recursos",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"nombre\":\"Laboratorio de Redes\",\"descripcion\":\"20 equipos\",\"tipo\":\"LABORATORIO\",\"capacidad\":20}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('recursoId', body.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consultar disponibilidad",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/recursos/{{recursoId}}/disponibilidad?fechaInicio={{fechaInicio}}&fechaFin={{fechaFin}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Disponible', () => pm.expect(pm.response.json().disponible).to.eql(true));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Crear reserva",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/reservas",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"usuarioId\":{{usuarioId}},\"recursoId\":{{recursoId}},\"fechaInicio\":\"{{fechaInicio}}\",\"fechaFin\":\"{{fechaFin}}\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('reservaId', body.id);",
+              "pm.test('Estado ACTIVA', () => pm.expect(body.estado).to.eql('ACTIVA'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rechazar solapamiento",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/reservas",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"usuarioId\":{{usuarioId}},\"recursoId\":{{recursoId}},\"fechaInicio\":\"{{fechaInicio}}\",\"fechaFin\":\"{{fechaFin}}\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+              "pm.test('Código de error', () => pm.expect(pm.response.json().error).to.eql('RESERVA_SUPERPUESTA'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consultar reserva",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/reservas/{{reservaId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Incluye usuario y recurso', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.usuario).to.be.an('object');",
+              "  pm.expect(body.recurso).to.be.an('object');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cancelar reserva",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/reservas/{{reservaId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

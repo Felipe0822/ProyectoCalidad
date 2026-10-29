@@ -8,7 +8,7 @@
 ## Phase 1: Setup
 
 - [x] T001 Agregar `@EnableScheduling` a `ReservasApplication`.
-- [x] T002 Crear `config/SchedulingConfig.java` si se requiere configuración adicional.
+- [x] T002 Verificar que no se requiere `config/SchedulingConfig.java`; la configuración actual vive en `ReservasApplication` y `application.yaml`.
 - [x] T003 Actualizar `application.yaml` con `app.scheduling.enabled` y `finalizacion-ms`.
 - [x] T004 Verificar que `./gradlew compileJava` pase.
 
@@ -23,7 +23,7 @@
 - [x] T009 [P] Agregar `findByIdForUpdate` con `PESSIMISTIC_WRITE` a `UsuarioRepository`.
 - [x] T010 [P] Agregar `findByIdForUpdate` con `PESSIMISTIC_WRITE` a `RecursoRepository`.
 - [x] T011 Implementar `countActivasVigentes` en `ReservaRepository`.
-- [x] T012 Implementar `existsOverlap` en `ReservaRepository`.
+- [x] T012 Implementar `countOverlaps` en `ReservaRepository`.
 - [x] T013 Implementar `findConflictos` en `ReservaRepository`.
 - [x] T014 Implementar `finalizarVencidas` en `ReservaRepository`.
 - [x] T015 Implementar consultas por usuario, recurso y fecha.
@@ -124,11 +124,12 @@
 ## Phase 8: Pruebas diferidas (posteriores a la estabilización)
 
 > No implementar todavía. Se agregan cuando la arquitectura esté cerrada.
+> Gate de entrega final: no se puede cerrar el proyecto hasta completar todas estas tareas, la prueba JMeter de 500 solicitudes y la cobertura.
 
 - [ ] T060 Unitarias de `ReservaService` para las 8 reglas.
 - [ ] T061 Integración de `ReservaController` con MockMvc.
 - [ ] T062 Pruebas de repositorio para solapamiento y conteo.
-- [ ] T063 Prueba de concurrencia con 20–50 hilos.
+- [ ] T063 Prueba automatizada de concurrencia con 20–50 hilos. La carga de 500 solicitudes se valida con JMeter antes de la entrega final.
 - [ ] T064 Prueba de contrato para disponibilidad y errores.
 - [ ] T065 Prueba de finalización automática con `Clock` fijo.
 

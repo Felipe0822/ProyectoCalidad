@@ -19,7 +19,7 @@ public class ReservaScheduler {
 
     private final ReservaService reservaService;
 
-    @Scheduled(fixedDelayString = "${app.scheduling.finalizacion-ms:60000}")
+    @Scheduled(fixedRateString = "${app.scheduling.finalizacion-ms:30000}")
     public void finalizarVencidas() {
         int actualizadas = reservaService.finalizarVencidas();
         if (actualizadas > 0) {

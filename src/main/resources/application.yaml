@@ -28,4 +28,4 @@ app:
   timezone: America/Bogota
   scheduling:
     enabled: true
-    finalizacion-ms: 60000
+    finalizacion-ms: 30000

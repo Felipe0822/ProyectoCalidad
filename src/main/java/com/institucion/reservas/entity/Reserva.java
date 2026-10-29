@@ -16,6 +16,7 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Check;
 
 import java.time.LocalDateTime;
 
@@ -33,6 +34,7 @@ import java.time.LocalDateTime;
                 )
         }
 )
+@Check(constraints = "fecha_fin > fecha_inicio")
 @Getter
 @Setter
 @NoArgsConstructor

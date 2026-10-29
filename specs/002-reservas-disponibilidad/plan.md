@@ -1,6 +1,6 @@
 # Implementation Plan: Reservas y disponibilidad
 
-**Branch**: `002-reservas-disponibilidad` | **Date**: 2026-10-25 | **Spec**: [spec.md](./spec.md)
+**Branch**: `002-reservas-disponibilidad` | **Date**: 2026-10-25 | **Status**: Approved for architecture iteration | **Spec**: [spec.md](./spec.md)
 
 **Input**: Feature specification from `/specs/002-reservas-disponibilidad/spec.md`
 
@@ -32,7 +32,7 @@ Implementar el núcleo del sistema: creación, cancelación y consulta de reserv
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- [x] Especificación primero: `spec.md` aprobado.
+- [x] Especificación primero: `spec.md` aprobado para la iteración de arquitectura (2026-10-29).
 - [x] Arquitectura en capas: Controller → Service → Repository.
 - [x] DTOs y mappers; entidades JPA no expuestas.
 - [x] Manejo global de errores con `@RestControllerAdvice`.
@@ -56,6 +56,7 @@ specs/002-reservas-disponibilidad/
 │   └── openapi.yaml
 ├── checklists/
 │   └── requirements.md
+├── traceability.md
 └── tasks.md
 ```
 
@@ -65,8 +66,7 @@ specs/002-reservas-disponibilidad/
 src/main/java/com/institucion/reservas/
 ├── ReservasApplication.java
 ├── config/
-│   ├── ClockConfig.java
-│   └── SchedulingConfig.java
+│   └── ClockConfig.java
 ├── controller/
 │   ├── UsuarioController.java
 │   ├── RecursoController.java
@@ -92,7 +92,9 @@ src/main/java/com/institucion/reservas/
 │   ├── reserva/
 │   │   ├── ReservaRequest.java
 │   │   ├── ReservaResponse.java
-│   │   ├── ReservaResumenResponse.java
+│   │   ├── UsuarioResumenResponse.java
+│   │   ├── RecursoResumenResponse.java
+│   │   ├── ConflictoReservaResponse.java
 │   │   └── DisponibilidadResponse.java
 │   └── error/
 │       └── ErrorResponse.java
@@ -162,7 +164,7 @@ El orden **usuario → recurso** es obligatorio para evitar deadlocks.
 ### Consultas
 
 - `countActivasVigentes(usuarioId, ACTIVA, now)`: `estado = ACTIVA AND fechaFin > now`.
-- `existsOverlap(recursoId, ACTIVA, inicio, fin)`: `estado = ACTIVA AND fechaInicio < fin AND fechaFin > inicio`.
+- `countOverlaps(recursoId, ACTIVA, inicio, fin)`: `estado = ACTIVA AND fechaInicio < fin AND fechaFin > inicio`.
 - `findConflictos(...)`: misma condición, para disponibilidad.
 
 ### H2
@@ -174,7 +176,7 @@ El orden **usuario → recurso** es obligatorio para evitar deadlocks.
 ## Finalization
 
 - `ReservaRepository.finalizarVencidas(ACTIVA, FINALIZADA, now)` con `@Modifying`.
-- `ReservaScheduler` con `@Scheduled` cada 60 segundos.
+- `ReservaScheduler` con `@Scheduled(fixedRate)` cada 30 segundos, para garantizar el máximo de 1 minuto del SC-006 incluso con el tiempo de ejecución del job.
 - Las respuestas calculan el estado efectivo: si `ACTIVA` y `fechaFin <= now`, se muestra `FINALIZADA`.
 - La cancelación rechaza si `fechaFin <= now`, aunque el job no haya corrido.
 
@@ -182,9 +184,9 @@ El orden **usuario → recurso** es obligatorio para evitar deadlocks.
 
 ### Phase 1 — Configuración
 
-- Agregar `@EnableScheduling`.
-- Configurar `SchedulingConfig` y `application.yaml`.
-- Agregar índices y `@Version` si se decide usar bloqueo optimista adicional.
+- Agregar `@EnableScheduling` en `ReservasApplication`.
+- Configurar `application.yaml` (`app.scheduling.enabled` y `app.scheduling.finalizacion-ms`).
+- Agregar índices y `@Version` si se decide usar bloqueo optimista adicional. No se requiere una clase `SchedulingConfig` para la configuración actual.
 
 ### Phase 2 — Dominio y persistencia
 
@@ -220,9 +222,14 @@ Las pruebas se difieren por decisión del proyecto. Antes de la entrega final se
 - Unitarias de `ReservaService` para las 8 reglas.
 - Integración de `ReservaController` con MockMvc.
 - Pruebas de repositorio para solapamiento y conteo.
-- Prueba de concurrencia con 20–50 hilos.
+- Prueba automatizada de concurrencia con 20–50 hilos para la iteración de arquitectura.
+- Prueba de carga con 500 solicitudes mediante JMeter antes de la entrega final (SC-002).
 - Prueba de contrato para disponibilidad y errores.
 
 ## Complexity Tracking
 
 No hay violaciones a la constitución. La complejidad de los bloqueos pesimistas está justificada por el requisito de 500 usuarios concurrentes sin duplicados.
+
+## Traceability
+
+La matriz de trazabilidad requisito → historia → tarea → prueba → código está en [traceability.md](./traceability.md).
