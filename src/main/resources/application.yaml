@@ -2,10 +2,10 @@ spring:
   application:
     name: reservas
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:reservas_db}
+    url: jdbc:postgresql://172.17.0.2:5432/reservas_db
     driver-class-name: org.postgresql.Driver
-    username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:postgres}
+    username: postgres
+    password: postgres
   jpa:
     hibernate:
       ddl-auto: update
